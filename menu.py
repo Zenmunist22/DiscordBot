@@ -1,4 +1,5 @@
-from test2 import option_2
+from dues import option_2
+from option_3 import splitTransaction
 flag = True
 while flag:
     command = input('Hi,' \
@@ -21,10 +22,13 @@ while flag:
             '3. Hazel\n' \
             '4. Kyle\n' \
             '5. Michael\n' \
+            '6. All' \
             'Option Selected: ')
             option_2(command)
         case "3":
-            command = input("TO BE CONTINUED")
+            command = input("Sample amount: ")
+            split = splitTransaction(int(command))
+            print("Each of you owe $" + str(split))
         
         case "4":
             print("Bye!")
