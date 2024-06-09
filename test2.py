@@ -10,3 +10,5 @@ def option_2(num: str):
             print("Here's Kyle's balance: \n")
         case "5":
             print("Here's Michael's balance: \n")
+        case "6":
+            print("Test")
