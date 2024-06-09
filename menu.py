@@ -1,5 +1,6 @@
 from dues import option_2
 from option_3 import splitTransaction
+balance = 0
 flag = True
 while flag:
     command = input('Hi,' \
@@ -14,6 +15,7 @@ while flag:
         case "1":
             command = input("Enter the expense amount: ")
             print("Adding $" + command +  " to your balance\n")
+            balance += int(command)
         case "2":
             command = input("Whose dues would you like to see?"\
             '\nPlease select from the following options:\n\n' \
@@ -22,7 +24,7 @@ while flag:
             '3. Hazel\n' \
             '4. Kyle\n' \
             '5. Michael\n' \
-            '6. All' \
+            '6. All\n' \
             'Option Selected: ')
             option_2(command)
         case "3":
