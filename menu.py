@@ -22,7 +22,7 @@ while flag:
             '3. Hazel\n' \
             '4. Kyle\n' \
             '5. Michael\n' \
-            '6. All' \
+            '6. All\n' \
             'Option Selected: ')
             option_2(command)
         case "3":
