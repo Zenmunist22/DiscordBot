@@ -1,3 +1,4 @@
+import person
 from dues import option_2
 from option_3 import splitTransaction
 flag = True
@@ -7,7 +8,8 @@ while flag:
             '1. Enter new expense\n'\
             '2. View current household dues\n' \
             '3. Display monthly payment breakdown\n' \
-            '4. Exit Program.\n\n' \
+            '4. Add User\n' \
+            '5. Exit Program\n\n' \
             'Option Selected: ')
 
     match command:
@@ -29,8 +31,9 @@ while flag:
             command = input("Sample amount: ")
             split = splitTransaction(int(command))
             print("Each of you owe $" + str(split))
-        
         case "4":
+            person.save()
+        case "5":
             print("Bye!")
             exit()
 
