@@ -2,6 +2,23 @@ import mysql.connector as con
 import datetime
 #cur.execute("CREATE TABLE Persons (id int PRIMARY KEY AUTO_INCREMENT, name varchar(50) NOT NULL, phone varchar(13) NOT NULL, email varchar(50) NOT NULL, created_at datetime NOT NULL, modified_at datetime)")
 
+def displayUsers():
+    db = con.connect(
+        user = 'root',
+        host = 'localhost',
+        database = 'test1',
+        passwd = 'r00tP45s!'
+    )
+
+    cur = db.cursor()
+    cur.execute("SELECT id , name FROM persons")
+    res = cur.fetchall()
+    for name in res:
+        print(name, '\n')
+    
+    db.commit()
+    cur.close()
+    db.close()
 def save():
     db = con.connect(
         user = 'root',

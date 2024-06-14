@@ -33,6 +33,7 @@ while flag:
             print("Each of you owe $" + str(split))
         case "4":
             person.save()
+            
         case "5":
             print("Bye!")
             exit()
