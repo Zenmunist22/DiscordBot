@@ -1,6 +1,8 @@
 import mysql.connector as con
 import person
-cur.execute("CREATE TABLE Transactions (id int PRIMARY KEY AUTO_INCREMENT, title varchar(50) NOT NULL, category ENUM('Food', 'Rent' , 'Funiture', 'Other')  NOT NULL, amount int NOT NULL, charged_to varchar(50) NOT NULL,  charged_from varchar(50) NOT NULL,  description varchar(50) NOT NULL,  created_by varchar(50) NOT NULL, created_at datetime NOT NULL, modified_by datetime NOT NULL, modified_at datetime NOT NULL, due_date datetime NOT NULL")
+import datetime
+#CREATE TABLE Transactions (id int PRIMARY KEY AUTO_INCREMENT, title varchar(50) NOT NULL, category ENUM('Food', 'Rent' , 'Funiture', 'Other')  NOT NULL, amount int NOT NULL, charged_to int NOT NULL,  charged_from int NOT NULL,  description varchar(50) NOT NULL,  created_by int NOT NULL, created_at datetime NOT NULL, modified_by int, modified_at datetime, due_date datetime NOT NULL, FOREIGN KEY (charged_to) REFERENCES persons(id) , FOREIGN KEY (charged_from) REFERENCES persons(id) , FOREIGN KEY (modified_by) REFERENCES persons(id), FOREIGN KEY (created_by) REFERENCES persons(id));
+
 
 def save():
     db = con.connect(
@@ -17,14 +19,16 @@ def save():
     amount = input("How much: ")
     print("Who paid: ")
     person.displayUsers()
-    charged_to = input()
+    charged_to = int(input())
     charged_from = input("Charged from?? ")
     description = input("Description: ")
     created_by = input("(USER NAME): ")
+    due_date = input("Due date (YYYY-MM-DD): ")
+    
 
-    sql = "INSERT INTO Transactions (name, phone, email, created_at) VALUES (%s, %s, %s, %s)"
+    sql = "INSERT INTO Transactions (title, category, amount, charged_to, charged_from, description_, created_by, created_at, due_date) VALUES (%s, %s, %s, %s , %s , %s , %s , %s , %s)"
 
-    cur.execute(sql, (name, phone, email, datetime.date.today()))
+    cur.execute(sql, (title, category, amount, charged_to, charged_from, description, created_by, datetime.date.today(), due_date))
 
     db.commit()
     cur.close()

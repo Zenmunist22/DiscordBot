@@ -19,6 +19,7 @@ def displayUsers():
     db.commit()
     cur.close()
     db.close()
+    
 def save():
     db = con.connect(
         user = 'root',

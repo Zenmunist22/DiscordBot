@@ -1,5 +1,5 @@
 import person
-from dues import option_2
+import transactions
 from option_3 import splitTransaction
 flag = True
 while flag:
@@ -14,19 +14,12 @@ while flag:
 
     match command:
         case "1":
-            command = input("Enter the expense amount: ")
-            print("Adding $" + command +  " to your balance\n")
+            transactions.save()
         case "2":
-            command = input("Whose dues would you like to see?"\
-            '\nPlease select from the following options:\n\n' \
-            '1. Tommy\n'\
-            '2. Hiram\n' \
-            '3. Hazel\n' \
-            '4. Kyle\n' \
-            '5. Michael\n' \
-            '6. All\n' \
-            'Option Selected: ')
-            option_2(command)
+            print("Whose dues would you like to see?"\
+            '\nPlease select from the following options:\n\n')
+            person.displayUsers()
+            command = input()
         case "3":
             command = input("Sample amount: ")
             split = splitTransaction(int(command))
