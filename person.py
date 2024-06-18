@@ -20,34 +20,42 @@ def displayUsers():
     cur.close()
     db.close()
     
-def save():
-    db = con.connect(
-        user = 'root',
-        host = 'localhost',
-        database = 'test1',
-        passwd = 'r00tP45s!'
-    )
 
-    cur = db.cursor()
-
-    name = input("Enter the name: ")
-    phone = input("Enter the phone number: ")
-    email = input("Enter the email: ")
-    sql = "INSERT INTO Persons (name, phone, email, created_at) VALUES (%s, %s, %s, %s)"
-
-    cur.execute(sql, (name, phone, email, datetime.date.today()))
-
-    db.commit()
-    cur.close()
-    db.close()
 
 class Person:
-    def __init__(self, ID: None, name: str, phone: str, email: str, created_at: str, modified_at: str) -> None:
+    def __init__(self, name: str, phone: str, email: str) -> None:
         self.name = name
         self.phone = phone
         self.email = email
-        self.created_at = created_at
-        self.modified_at = modified_at
-        self.ID = ID
-        
+        self.created_at = datetime.date.today()
+        self.modified_at = None
+        self.ID = None
+
+    def save(self):
+        db = con.connect(
+            user = 'root',
+            host = 'localhost',
+            database = 'test1',
+            passwd = 'r00tP45s!'
+        )
+
+        cur = db.cursor()
+        sql = "INSERT INTO Persons (name, phone, email, created_at) VALUES (%s, %s, %s, %s)"
+        cur.execute(sql, (self.name, self.phone, self.email, self.created_at))
+
+        db.commit()
+        self.ID = cur.lastrowid
+        cur.close()
+        db.close()
+
+    @classmethod
+    def create(cls, name, phone, email):
+        new_instance = cls(name, phone, email)
+        new_instance.save()
+
+        return new_instance
+    
+    
+
+       
     
