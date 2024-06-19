@@ -1,6 +1,6 @@
 import person
 import transactions
-from option_3 import splitTransaction
+from DiscordBot.payments import splitTransaction
 flag = True
 while flag:
     command = input('Hi,' \
