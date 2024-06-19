@@ -1,6 +1,6 @@
 import mysql.connector as con
 import datetime
-#cur.execute("CREATE TABLE Persons (id int PRIMARY KEY AUTO_INCREMENT, name varchar(50) NOT NULL, phone varchar(13) NOT NULL, email varchar(50) NOT NULL, created_at datetime NOT NULL, modified_at datetime)")
+#cur.execute("CREATE TABLE Persons (id int PRIMARY KEY AUTO_INCREMENT, name varchar(50) NOT NULL, phone_number varchar(45) NOT NULL, email varchar(255) NOT NULL, create_time TIMESTAMP NOT NULL)")
 
 def displayUsers():
     db = con.connect(
@@ -23,12 +23,11 @@ def displayUsers():
 
 
 class Person:
-    def __init__(self, name: str, phone: str, email: str) -> None:
+    def __init__(self, name: str, phone_number: str, email: str) -> None:
         self.name = name
-        self.phone = phone
+        self.phone_number = phone_number
         self.email = email
-        self.created_at = datetime.date.today()
-        self.modified_at = None
+        self.create_time = datetime.date.today()
         self.ID = None
 
     def save(self):
@@ -40,8 +39,8 @@ class Person:
         )
 
         cur = db.cursor()
-        sql = "INSERT INTO Persons (name, phone, email, created_at) VALUES (%s, %s, %s, %s)"
-        cur.execute(sql, (self.name, self.phone, self.email, self.created_at))
+        sql = "INSERT INTO Persons (name, phone_number, email, create_time) VALUES (%s, %s, %s, %s)"
+        cur.execute(sql, (self.name, self.phone_number, self.email, self.create_time))
 
         db.commit()
         self.ID = cur.lastrowid
@@ -49,8 +48,8 @@ class Person:
         db.close()
 
     @classmethod
-    def create(cls, name, phone, email):
-        new_instance = cls(name, phone, email)
+    def create(cls, name, phone_number, email):
+        new_instance = cls(name, phone_number, email)
         new_instance.save()
 
         return new_instance

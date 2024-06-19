@@ -14,17 +14,23 @@ while flag:
 
     match command:
         case "1":
-            title = input("Title for transaction: ")
-            category = input("Category:\n Food (1)\n Rent (2)\n Funiture (3)\n Other (4)\n")
-            amount = input("How much: ")
-            print("Charged to: ")
+            print("The expense falls under which category: ")
+            transactions.displayCategories()
+            transaction_category_id = int(input())
+            print("Paid by: ")
             person.displayUsers()
-            charged_to = int(input())
-            charged_from = input("Charged from: ")
+            user_id_paid_by = int(input())
+            amount = input("How much: ")
+            source = input("Source: ")
+            print("Split TEST: ")
+            person.displayUsers()
+            split_to_persons = int(input())
             description = input("Description: ")
-            created_by = input("(USER NAME): ")
-            due_date = input("Due date (YYYY-MM-DD): ")
-            transactions.Transactions.create(title, category, amount, charged_to, charged_from, description, created_by, due_date)
+            date = input("Date of purchase (YYYY-MM-DD): ")
+            print("Created by: ")
+            person.displayUsers()
+            created_by = int(input())
+            transactions.Transactions.create(transaction_category_id, user_id_paid_by, amount, source, split_to_persons, description, date, created_by)
         case "2":
             print("Whose dues would you like to see?"\
             '\nPlease select from the following options:\n\n')
@@ -36,9 +42,9 @@ while flag:
             print("Each of you owe $" + str(split))
         case "4":
             name = input("Enter the name: ")
-            phone = input("Enter the phone number: ")
+            phone_number = input("Enter the phone number: ")
             email = input("Enter the email: ")
-            person.Person.create(name, phone, email)
+            person.Person.create(name, phone_number, email)
             
         case "5":
             print("Bye!")
