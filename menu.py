@@ -1,21 +1,22 @@
-import user
 import transactions
+import users
 import charges
 from payments import splitTransaction
 flag = True
+users.displayUsers()
 def new_expense():
     print("The expense falls under which category: ")
     transactions.displayCategories()
     transaction_category_id = int(input())
     print("Paid by: ")
-    user.displayUsers()
+    users.displayUsers()
     user_id_paid_by = int(input())
     amount = input("How much: ")
     source = input("Source of purchase: ")
     users_paying = []
     while flag:
         print("Who needs to pay: ")
-        user.displayUsers()
+        users.displayUsers()
         hold = input()
         print("Confirm charge to" + hold + "? (y/n)")
         confirm = input()
@@ -32,10 +33,10 @@ def new_expense():
     description = input("Description: ")
     date = input("Date of purchase (YYYY-MM-DD): ")
     print("Created by: ")
-    user.displayUsers()
+    users.displayUsers()
     created_by = int(input())
-    new_trans = transactions.Transactions.create(transaction_category_id, user_id_paid_by, amount, source, split_to_users, description, date, created_by)
-    split = amount/len(users_paying)
+    new_trans = transactions.Transactions.create(transaction_category_id, user_id_paid_by, int(amount), source, split_to_users, description, date, created_by)
+    split = float(amount)//(len(users_paying))
     for user in users_paying:
         charges.Charges.create(new_trans.id, user, split, created_by)
     
@@ -44,13 +45,13 @@ def add_user():
     name = input("Enter the name: ")
     phone_number = input("Enter the phone number: ")
     email = input("Enter the email: ")
-    test = user.User.create(name, phone_number, email)
+    test = users.User.create(name, phone_number, email)
     #print(str(test.id) + " " + test.email)
 
 def display_dues():
     print("Whose dues would you like to see?"\
     '\nPlease select from the following options:\n\n')
-    user.displayUsers()
+    users.displayUsers()
     command = input()
 
 while flag:

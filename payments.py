@@ -1,5 +1,5 @@
 import mysql.connector as con
-import user
+import users
 import datetime
 #CREATE TABLE payments (id INT PRIMARY KEY AUTO_INCREMENT,
 #transaction_id INT NOT NULL,
