@@ -1,18 +1,42 @@
 import mysql.connector as con
 import datetime
-#CREATE TABLE charges (id INT PRIMARY KEY AUTO_INCREMENT,
-#transaction_id INT NOT NULL,
-#user_id_charge_affected INT NOT NULL,
-#amount DECIMAL(2) NOT NULL,
-#created_by INT NOT NULL,
-#created_at DATE NOT NULL,
-#modified_by INT,
-#modified_at DATE,
-#FOREIGN KEY (transaction_id) REFERENCES transactions(id),
-#FOREIGN KEY (user_id_charge_affected) REFERENCES users(id),
-#FOREIGN KEY (created_by) REFERENCES users(id),
-#FOREIGN KEY (modified_by) REFERENCES users(id)
-#);
+'''CREATE TABLE charges (id INT PRIMARY KEY AUTO_INCREMENT,
+transaction_id INT NOT NULL,
+user_id_charge_affected INT NOT NULL,
+amount DECIMAL(65, 2) NOT NULL,
+created_by INT NOT NULL,
+created_at DATE NOT NULL,
+modified_by INT,
+modified_at DATE,
+charge_status ENUM('Paid', 'Owed') NOT NULL DEFAULT 'Owed',
+FOREIGN KEY (transaction_id) REFERENCES transactions(id),
+FOREIGN KEY (user_id_charge_affected) REFERENCES users(id),
+FOREIGN KEY (created_by) REFERENCES users(id),
+FOREIGN KEY (modified_by) REFERENCES users(id)
+);'''
+
+def dues(user_dues):
+    db = con.connect(
+        user = 'root',
+        host = 'localhost',
+        database = 'test1',
+        passwd = 'r00tP45s!'
+    )
+
+    cur = db.cursor()
+    sql = '''SELECT transactions.source, transactions.description, transactions.user_id_paid_by, charges.amount FROM transactions
+            LEFT JOIN charges 
+            ON charges.transaction_id = transactions.id
+            WHERE charges.user_id_charge_affected = %s; '''
+    cur.execute(sql, (user_dues,))
+    res = cur.fetchall()
+    for charge in res:
+        print(charge, '\n')
+    
+    db.commit()
+    cur.close()
+    db.close()
+    
 
 class Charges:
     def __init__(self, transaction_id, user_id_charge_affected, amount, created_by) -> None:
@@ -23,6 +47,7 @@ class Charges:
         self.created_at = datetime.date.today()
         self.modified_at = None
         self.modified_by = None
+        self.charge_status = "Owed"
         self.id = None
 
     def save(self):

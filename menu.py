@@ -1,9 +1,8 @@
 import transactions
 import users
 import charges
-from payments import splitTransaction
+import payments
 flag = True
-users.displayUsers()
 def new_expense():
     print("The expense falls under which category: ")
     transactions.displayCategories()
@@ -18,7 +17,7 @@ def new_expense():
         print("Who needs to pay: ")
         users.displayUsers()
         hold = input()
-        print("Confirm charge to" + hold + "? (y/n)")
+        print("Confirm charge to " + hold + "? (y/n)")
         confirm = input()
         if confirm == "y":
             users_paying.append(hold)
@@ -29,14 +28,14 @@ def new_expense():
             pass
         if again == "n":
             break
-    split_to_users = int(input())
     description = input("Description: ")
     date = input("Date of purchase (YYYY-MM-DD): ")
     print("Created by: ")
     users.displayUsers()
     created_by = int(input())
+    split_to_users = len(users_paying) + 1
     new_trans = transactions.Transactions.create(transaction_category_id, user_id_paid_by, int(amount), source, split_to_users, description, date, created_by)
-    split = float(amount)//(len(users_paying))
+    split = float(amount)//(split_to_users)
     for user in users_paying:
         charges.Charges.create(new_trans.id, user, split, created_by)
     
@@ -52,14 +51,33 @@ def display_dues():
     print("Whose dues would you like to see?"\
     '\nPlease select from the following options:\n\n')
     users.displayUsers()
-    command = input()
+    user_dues = input()
+    charges.dues(user_dues)
+
+def make_payment():
+    print("Who is making the payment?")
+    users.displayUsers()
+    currently_paying = input()
+    print("Who is the payment to? ")
+    being_paid = input()
+    print("Select from the following transactions: ")
+    transactions.displaySpecifiedTransactions(currently_paying, being_paid)
+    transaction_id = input()
+    method = input("Payment method: ")
+    amount = input("Payment amount: ")
+    #if(int(amount) >= something), then update status to PAID instead of OWED. Subtract amount from Charge amount and update Modified attributes
+    date = input("Payment date: ")
+    print("Created by: ")
+    users.displayUsers()
+    created_by = input()
+    payments.Payments.create(transaction_id, currently_paying, method, int(amount), date, created_by)
 
 while flag:
     command = input('Hi,' \
             '\nPlease select from the following options:\n\n' \
             '1. Enter new expense\n'\
             '2. View current household dues\n' \
-            '3. Display monthly payment breakdown\n' \
+            '3. Make payment\n' \
             '4. Add User\n' \
             '5. Exit Program\n\n' \
             'Option Selected: ')
@@ -70,9 +88,7 @@ while flag:
         case "2":
             display_dues()
         case "3":
-            command = input("Sample amount: ")
-            split = splitTransaction(int(command))
-            print("Each of you owe $" + str(split))
+            make_payment()
         case "4":
             add_user()
         case "5":
