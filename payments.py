@@ -1,20 +1,10 @@
 import database
 import users
 import datetime
-'''CREATE TABLE payments (id INT PRIMARY KEY AUTO_INCREMENT,
-transaction_id INT,
-user_id_paid_by INT NOT NULL,
-user_id_paid_to INT NOT NULL,
-method VARCHAR(45) NOT NULL,
-amount DECIMAL(65, 2) NOT NULL,
-date DATE NOT NULL,
-created_by INT NOT NULL,
-created_at DATE NOT NULL,
-FOREIGN KEY (transaction_id) REFERENCES transactions(id),
-FOREIGN KEY (user_id_paid_by) REFERENCES users(id),
-FOREIGN KEY (created_by) REFERENCES users(id),
-FOREIGN KEY (user_id_paid_to) REFERENCES users(id)
-);'''
+import transactions as tran
+
+
+paymentTable = {}
 
 class Payments:
     def __init__(self, id, transaction_id, user_id_paid_by, user_id_paid_to, method, amount, date, created_by, created_at) -> None:
@@ -36,6 +26,7 @@ class Payments:
 
         db.connection.commit()
         self.id = db.cur.lastrowid
+        paymentTable[self.id] = self
         db.close()
 
     @classmethod
@@ -56,3 +47,51 @@ def fetchPayments():
 
 payment_list = fetchPayments()
 paymentTable = {payment.id: payment for payment in payment_list}
+
+def paid(user_paid):
+    db = database.Database()
+
+    print("Payments to who?"\
+    '\nPlease select from the following options:\n')
+    users.displayUsers()
+    specifiy_user = input()
+
+    sql = '''SELECT transactions.id, payments.id FROM transactions
+            LEFT JOIN payments 
+            ON payments.transaction_id = transactions.id
+            WHERE payments.user_id_paid_by = %s AND
+            payments.user_id_paid_to = %s ; '''
+    
+    db.cur.execute(sql, (user_paid, specifiy_user))
+    res = db.cur.fetchall()
+    tranList = []
+    payList = []
+    for p in res:
+        tranList.append(tran.transactionTable[int(p[0])])
+        payList.append(paymentTable[int(p[1])])
+
+    sql = '''SELECT NULL, payments.id FROM payments
+            WHERE payments.transaction_id IS NULL
+            AND payments.user_id_paid_by = %s AND
+            payments.user_id_paid_to = %s; '''
+    db.cur.execute(sql, (user_paid, specifiy_user))
+    res = db.cur.fetchall()
+    
+    for p in res:
+        tranList.append(0)
+        payList.append(paymentTable[int(p[1])])
+
+    if payList == []:
+        print("There are no payments made by " + users.showUser(int(user_paid)) + " to " + users.showUser(int(specifiy_user)))
+    else:
+        print("Payments " + users.showUser(int(user_paid)) + " made to " + users.showUser(int(specifiy_user)))
+        print("----------------------------")
+        for (t, p) in zip(tranList, payList):
+            if t == 0:
+                print(" $" + str(p.amount) + " on " + str(p.date))
+            else: 
+                print(" $" + str(p.amount) + " on " + str(p.date) + " for " + t.description)   
+    print()
+
+
+    db.close()

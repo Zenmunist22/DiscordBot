@@ -1,8 +1,7 @@
 import mysql.connector as con
 import datetime
 import database
- 
-#cur.execute("CREATE TABLE Users (id int PRIMARY KEY AUTO_INCREMENT, name varchar(50) NOT NULL, phone_number varchar(45) NOT NULL, email varchar(255) NOT NULL, create_time TIMESTAMP NOT NULL)")
+usersTable = {}
 
 #User class
 class User:
@@ -20,6 +19,7 @@ class User:
 
         db.connection.commit()
         self.id = db.cur.lastrowid
+        usersTable[self.id] = self
         db.close()
 
     @classmethod
@@ -43,8 +43,10 @@ def fetchUsers():
 users_list = fetchUsers()
 usersTable = {user.id: user for user in users_list}
 
+def showUser(ID):
+    return usersTable[ID].name
+    
 def displayUsers():
     for user in usersTable:
-        print(str(user) + ". " + usersTable[user].name)
-    
+        print(str(user) + ". " + showUser(user))
     

@@ -11,7 +11,7 @@ class Database:
             )
             self.cur = self.connection.cursor()
         except con.Error as err:
-            print(f"Error: {err}")
+            print(f"Error: {err}\nTry again later!")
             self.connection = None
 
 

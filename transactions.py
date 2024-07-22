@@ -2,10 +2,9 @@ import database
 import users
 import datetime
 
-'''CREATE TABLE Transactions (id int PRIMARY KEY AUTO_INCREMENT, transaction_category_id INT NOT NULL, user_id_paid_by INT NOT NULL, DECIMAL(65,2) NOT NULL, source VARCHAR(255) NOT NULL, split_to_users INT NOT NULL, description VARCHAR(45) NOT NULL, date DATE NOT NULL, updated_at TIMESTAMP, created_at TIMESTAMP NOT NULL, created_by INT NOT NULL, updated_by INT, FOREIGN KEY (user_id_paid_by) REFERENCES users(id) , FOREIGN KEY (split_to_users) REFERENCES users(id) , FOREIGN KEY (created_by) REFERENCES users(id), FOREIGN KEY (updated_by) REFERENCES users(id), FOREIGN KEY (transaction_category_id) REFERENCES transaction_category(id));
-CREATE TABLE transaction_category (id INT PRIMARY KEY AUTO_INCREMENT, name VARCHAR(45) NOT NULL, created_at DATE NOT NULL);
-INSERT INTO transaction_category (name, created_at) values ("Grocery", CURDATE()), ("Rent",CURDATE()), ("Furniture",CURDATE()), ("Supply",CURDATE()), ("Other", CURDATE());
-'''
+
+transactionTable = {}
+
 #class trans
 class Transactions:
     def __init__(self, id, transaction_category_id, user_id_paid_by, amount, source, split_to_users, description, date, updated_at, created_at, created_by, updated_by=None) -> None:
@@ -30,6 +29,7 @@ class Transactions:
 
         db.connection.commit()
         self.id = db.cur.lastrowid
+        transactionTable[self.id] = self
         db.close()
             
     @classmethod
@@ -57,11 +57,13 @@ def displayCategories():
 
     db.cur.execute("SELECT id , name FROM transaction_category")
     res = db.cur.fetchall()
+    cat = set()
     for name in res:
-        print(name, '\n')
+        print(str(name[0]) + ". " + name[1])
+        cat.add(str(name[0]))
     
-    db.connection.commit()
     db.close()
+    return cat
 
 def displaySpecifiedTransactions(currently_paying, being_paid):
     db = database.Database()
@@ -76,7 +78,7 @@ def displaySpecifiedTransactions(currently_paying, being_paid):
     for charge in res:
         temp.append(transactionTable[int(*charge)])
     for t in temp:
-        print(str(t.id) + ". " + t.description)
+        print(str(t.id) + ". " + t.description + " for an amount of $" + str(t.amount) + " from " + str(t.date))
     db.close()
     
 
