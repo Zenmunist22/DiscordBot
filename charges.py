@@ -46,13 +46,8 @@ def fetchCharges():
 charge_list = fetchCharges()
 chargeTable = {charge.id: charge for charge in charge_list}
 
-def dues(user_dues):
+def dues(user_dues, specifiy_user):
     db = database.Database()
-
-    print("Dues between " + users.showUser(int(user_dues)) + " and who?"\
-    '\nPlease select from the following options:\n')
-    users.displayUsers()
-    specifiy_user = input()
 
     sql = '''SELECT transactions.id, charges.id FROM transactions
             LEFT JOIN charges 

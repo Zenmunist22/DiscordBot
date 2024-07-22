@@ -67,6 +67,7 @@ def displayCategories():
 
 def displaySpecifiedTransactions(currently_paying, being_paid):
     db = database.Database()
+    s = set()
     sql = '''SELECT transactions.id FROM transactions
             LEFT JOIN charges 
             ON charges.transaction_id = transactions.id
@@ -79,6 +80,8 @@ def displaySpecifiedTransactions(currently_paying, being_paid):
         temp.append(transactionTable[int(*charge)])
     for t in temp:
         print(str(t.id) + ". " + t.description + " for an amount of $" + str(t.amount) + " from " + str(t.date))
+        s.add(t.id)
     db.close()
+    return s
     
 

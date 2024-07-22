@@ -48,13 +48,8 @@ def fetchPayments():
 payment_list = fetchPayments()
 paymentTable = {payment.id: payment for payment in payment_list}
 
-def paid(user_paid):
+def paid(user_paid, specifiy_user):
     db = database.Database()
-
-    print("Payments to who?"\
-    '\nPlease select from the following options:\n')
-    users.displayUsers()
-    specifiy_user = input()
 
     sql = '''SELECT transactions.id, payments.id FROM transactions
             LEFT JOIN payments 

@@ -46,7 +46,13 @@ usersTable = {user.id: user for user in users_list}
 def showUser(ID):
     return usersTable[ID].name
     
-def displayUsers():
+def displayUsers(option = None):
+    if option:
+        res = set()
+        for user in usersTable:
+            res.add(showUser(user))
+        return res
+
     for user in usersTable:
-        print(str(user) + ". " + showUser(user))
+        print(f"{str(user)+".":<{3}} {showUser(user)}")
     

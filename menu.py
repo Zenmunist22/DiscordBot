@@ -111,119 +111,247 @@ def new_expense():
         print(f"An unexpected error occurred: {e}")
 
 def add_user():
-    name = input("Enter the name: ")
-    phone_number = input("Enter the phone number: ")
-    email = input("Enter the email: ")
-    users.User.create(None, name, phone_number, email)
+    try:
+        name = input("Enter the name: ").strip()
+        if not name:
+            raise ValueError("Name cannot be empty.")
+        nameSet = users.displayUsers(1)
+        if name in nameSet:
+            raise ValueError("Name already taken. Try something else")
+
+        phone_number = input("Enter the phone number: ")
+        if not phone_number.isdigit():
+            raise ValueError("Phone number must contain only digits.")
+        if len(phone_number) < 7 or len(phone_number) > 15:
+            raise ValueError("Phone number must be between 7 and 15 digits long.")
+
+        email = input("Enter the email: ")
+        if "@" not in email or "." not in email:
+            raise ValueError("Email must be a valid email address.")
+
+        users.User.create(None, name, phone_number, email)
+        print("User created successfully!")
+
+    except ValueError as e:
+        print(f"Input error: {e}")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
 
 def display_dues():
-    print("Whose dues would you like to see?"\
-    '\nPlease select from the following options:\n')
-    users.displayUsers()
-    user_dues = input()
-    print(users.showUser(int(user_dues)) + "'s Balance")
-    print("----------------------------")
-    total = 0
-    for i in users.usersTable:
-        if i == int(user_dues):
-            continue
-        total += seeBalance(user_dues, users.usersTable[i].id, 1)
-    print("\nTotal Balance: $" + str(total))
-    print("----------------------------")
+    try:
+        print("Whose dues would you like to see?\nPlease select from the following options:\n")
+        users.displayUsers()
+        user_dues = input()
+        if not user_dues.isdigit() or int(user_dues) not in users.usersTable:
+            raise ValueError("Invalid user ID selected.")
+        user_dues = int(user_dues)
+        
+        print(users.showUser(user_dues) + "'s Balance")
+        print("----------------------------")
+        
+        total = 0
+        for i in users.usersTable:
+            if i == user_dues:
+                continue
+            total += seeBalance(user_dues, i, 1)
+        
+        print("\nTotal Balance: $" + str(total))
+        print("----------------------------")
+    
+    except ValueError as e:
+        print(f"Input error: {e}")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
 
 def make_payment():
+    try:
+        print("Who is making the payment?")
+        users.displayUsers()
+        currently_paying = input()
+        if not currently_paying.isdigit() or int(currently_paying) not in users.usersTable:
+            raise ValueError("Invalid user ID for who is making the payment.")
+        currently_paying = int(currently_paying)
 
-    print("Who is making the payment?")
-    users.displayUsers()
-    currently_paying = input()
+        print("Who is the payment to? ")
+        being_paid = input()
+        if not being_paid.isdigit() or int(being_paid) not in users.usersTable:
+            raise ValueError("Invalid user ID for who is being paid.")
+        being_paid = int(being_paid)
 
-    print("Who is the payment to? ")
-    being_paid = input()
-
-    balance = seeBalance(currently_paying, being_paid, 2)
-    
-    if balance > 0 :
-        print(users.showUser(int(currently_paying)) + " owes " + users.showUser(int(being_paid)) + " $" + str(balance))
-    elif balance < 0:
-        print(users.showUser(int(being_paid)) + " owes " + users.showUser(int(currently_paying)) + " $" + str(-1*balance))
-    else:
-        print("There is no debt between " + users.showUser(int(being_paid)) + " and " + users.showUser(int(currently_paying)))
-        cont = input("Would you like to add a transaction? (y/n) ")
-        if cont == "y":
-            new_expense()
+        balance = seeBalance(currently_paying, being_paid, 2)
+        
+        if balance > 0 :
+            print(users.showUser(int(currently_paying)) + " owes " + users.showUser(int(being_paid)) + " $" + str(balance))
+        elif balance < 0:
+            print(users.showUser(int(being_paid)) + " owes " + users.showUser(int(currently_paying)) + " $" + str(-1*balance))
         else:
-            cont = input("Would you like to continue with the payment? (y/n) ")
+            print("There is no debt between " + users.showUser(int(being_paid)) + " and " + users.showUser(int(currently_paying)))
+            while True:
+                cont = input("Would you like to continue with the payment? (y/n) ").strip().lower()
+                if cont in ['y', 'n']:
+                    break
+                else:
+                    print("Invalid input. Please enter 'y' or 'n'.")
             if cont == "n":
                 return
 
-    specific = input("Is the payment specific to one transaction? (y/n) ")
+        while True:
+            specific = input("Is the payment specific to one transaction? (y/n) ").strip().lower()
+            if specific in ['y', 'n']:
+                break
+            else:
+                print("Invalid input. Please enter 'y' or 'n'.")
 
-    if specific == "y":
-        print("Select from the following transactions: ")
-        transactions.displaySpecifiedTransactions(currently_paying, being_paid)
-        transaction_id = input()
-    else:
-        transaction_id = None
+        if specific == "y":
+            tSet = transactions.displaySpecifiedTransactions(currently_paying, being_paid)
+            if tSet:
+                print("Select from the following transactions: ")
+                transaction_id = input()
+                if not transaction_id.isdigit() or int(transaction_id) not in tSet:
+                    raise ValueError("Invalid transaction ID.")
+            else:
+                print(f"There are no transactions where {users.showUser(int(currently_paying))} owes {users.showUser(int(being_paid))}")
+                transaction_id = None
+        else:
+            transaction_id = None
 
-    method = input("Payment method: ")
-    amount = input("Payment amount: ")
-    date = input("Payment date: ")
+        method = input("Payment method: ")
+        if not method:
+            raise ValueError("Payment method cannot be empty.")
 
-    print("Created by: ")
-    users.displayUsers()
-    created_by = input()
-    
-    payments.Payments.create(None, transaction_id, currently_paying, being_paid, method, int(amount), date, created_by, None)
+        amount = input("Payment amount: ")
+        try:
+            amount = float(amount)
+            if amount <= 0:
+                raise ValueError("Payment amount must be positive.")
+        except ValueError:
+            raise ValueError("Payment amount must be a valid number.")
+
+        date = input("Payment date (YYYY-MM-DD): ")
+        # Optional: Add date validation here
+
+        print("Created by: ")
+        users.displayUsers()
+        created_by = input()
+        if not created_by.isdigit() or int(created_by) not in users.usersTable:
+            raise ValueError("Invalid user ID for created by.")
+        created_by = int(created_by)
+
+        payments.Payments.create(None, transaction_id, currently_paying, being_paid, method, amount, date, created_by, None)
+        print("Payment created successfully!")
+    except ValueError as e:
+        print(f"Input error: {e}")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
 
 def seeBalance(payer, payee, option):
-    db = database.Database()
-    sql = '''SELECT SUM(charges.amount) as total FROM transactions
-            LEFT JOIN charges 
-            ON charges.transaction_id = transactions.id
-            WHERE charges.user_id_charge_affected = %s
-            AND transactions.user_id_paid_by = %s;'''
-    db.cur.execute(sql, (payer, payee))
-    results = db.cur.fetchall()
-    if results is None or results[0] is None or results[0][0] is None:
-        res = 0
-    else:
-        res = results[0][0]
-    db.cur.execute(sql, (payee, payer))
-    results = db.cur.fetchall()
-    if results[0][0] is not None:
-        res = res - results[0][0]
-    sql = '''SELECT SUM(payments.amount) as total FROM payments 
-            WHERE user_id_paid_by = %s
-            AND user_id_paid_to = %s;'''
-    db.cur.execute(sql, (payer, payee))
-    results = db.cur.fetchall()
-    if results is None or results[0] is None or results[0][0] is None:
-        res2 = 0
-    else:
-        res2 = results[0][0]
-    db.cur.execute(sql, (payee, payer))
-    results = db.cur.fetchall()
-    if results[0][0] is not None:
-        res2 = res2 - results[0][0]
-    balance = res - res2
-    if option == 1:
-        print( f"To {users.showUser(int(payee)):<5}\t${balance:.2f}")
-    db.close()
-    return balance
+    try:
+        db = database.Database()
+        
+        sql = '''SELECT SUM(charges.amount) as total FROM transactions
+                LEFT JOIN charges 
+                ON charges.transaction_id = transactions.id
+                WHERE charges.user_id_charge_affected = %s
+                AND transactions.user_id_paid_by = %s;'''
+        
+        try:
+            db.cur.execute(sql, (payer, payee))
+            results = db.cur.fetchall()
+            if not results or results[0] is None or results[0][0] is None:
+                res = 0
+            else:
+                res = results[0][0]
+            
+            db.cur.execute(sql, (payee, payer))
+            results = db.cur.fetchall()
+            if results and results[0][0] is not None:
+                res -= results[0][0]
+        
+        except Exception as e:
+            print(f"An error occurred while fetching transactions: {e}")
+            res = 0
+
+        sql = '''SELECT SUM(payments.amount) as total FROM payments 
+                WHERE user_id_paid_by = %s
+                AND user_id_paid_to = %s;'''
+
+        try:
+            db.cur.execute(sql, (payer, payee))
+            results = db.cur.fetchall()
+            if not results or results[0] is None or results[0][0] is None:
+                res2 = 0
+            else:
+                res2 = results[0][0]
+            
+            db.cur.execute(sql, (payee, payer))
+            results = db.cur.fetchall()
+            if results and results[0][0] is not None:
+                res2 -= results[0][0]
+
+        except Exception as e:
+            print(f"An error occurred while fetching payments: {e}")
+            res2 = 0
+
+        balance = res - res2
+
+        if option == 1:
+            print(f"To {users.showUser(int(payee)):<5}\t${balance:.2f}")
+
+        return balance
+
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        return 0
+
+    finally:
+        db.close()
 
 def displayCharges():
-    print("Whose dues would you like to see?"\
-    '\nPlease select from the following options:\n')
-    users.displayUsers()
-    user_dues = input()
-    charges.dues(user_dues)
+    try:
+        print("Whose dues would you like to see?\nPlease select from the following options:\n")
+        users.displayUsers()
+        user_dues = input()
+        if not user_dues.isdigit() or int(user_dues) not in users.usersTable:
+            raise ValueError("Invalid user ID selected.")
+        user_dues = int(user_dues)
+        print("Dues between " + users.showUser(int(user_dues)) + " and who?"\
+        '\nPlease select from the following options:\n')
+        users.displayUsers()
+        specifiy_user = input()
+        if not specifiy_user.isdigit() or int(specifiy_user) not in users.usersTable:
+            raise ValueError("Invalid user ID selected.")
+        specifiy_user = int(specifiy_user)
+        
+        charges.dues(user_dues, specifiy_user)
+    
+    except ValueError as e:
+        print(f"Input error: {e}")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
 
 def displayPayments():
-    print("Whose payments would you like to see?"\
-    '\nPlease select from the following options:\n')
-    users.displayUsers()
-    user_paid = input()
-    payments.paid(user_paid)
+    try:
+        print("Whose payments would you like to see?\nPlease select from the following options:\n")
+        users.displayUsers()
+        user_paid = input()
+        if not user_paid.isdigit() or int(user_paid) not in users.usersTable:
+            raise ValueError("Invalid user ID selected.")
+        user_paid = int(user_paid)
+
+        print("Payments to who?"\
+        '\nPlease select from the following options:\n')
+        users.displayUsers()
+        specifiy_user = input()
+        if not specifiy_user.isdigit() or int(specifiy_user) not in users.usersTable:
+            raise ValueError("Invalid user ID selected.")
+        specifiy_user = int(specifiy_user)
+
+        payments.paid(user_paid, specifiy_user)
+    
+    except ValueError as e:
+        print(f"Input error: {e}")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
     
 
 while flag:
@@ -236,7 +364,7 @@ while flag:
             '5. View charges\n' \
             '6. View payments\n' \
             '7. Exit Program\n\n' \
-            'Option Selected: ')
+            'Option Selected: ').strip()
 
     match command:
         case "1":
