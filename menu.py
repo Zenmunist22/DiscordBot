@@ -3,8 +3,7 @@ import users
 import charges
 import payments
 import database
-
-flag = True
+from datetime import datetime
 
 def new_expense():
     try:
@@ -73,7 +72,8 @@ def new_expense():
         description = input("Description: ")
         if not description:
             raise ValueError("Description cannot be empty.")
-        date = input("Date of purchase (YYYY-MM-DD): ")
+        
+        date = date_input("Date of purchase (YYYY-MM-DD) or type 'today': ")
 
         print("Created by: ")
         users.displayUsers()
@@ -86,8 +86,8 @@ def new_expense():
         split = amount/split_to_users
 
         print("Confirm transaction:\n" +
-            users.showUser(user_id_paid_by) + " paid $" + str(amount) + " for " + description)
-        print("The following user(s) will be charged $" + str(split) + " each:")
+            users.showUser(user_id_paid_by) + " paid $" + f"{amount:.2f}" + " for " + description)
+        print("The following user(s) will be charged $" + f"{split:.2f}" + " each:")
         for user in users_paying:
             print(users.showUser(int(user)))
         
@@ -155,7 +155,7 @@ def display_dues():
                 continue
             total += seeBalance(user_dues, i, 1)
         
-        print("\nTotal Balance: $" + str(total))
+        print("\nTotal Balance: $" + f"{total:.2f}")
         print("----------------------------")
     
     except ValueError as e:
@@ -181,9 +181,9 @@ def make_payment():
         balance = seeBalance(currently_paying, being_paid, 2)
         
         if balance > 0 :
-            print(users.showUser(int(currently_paying)) + " owes " + users.showUser(int(being_paid)) + " $" + str(balance))
+            print(users.showUser(int(currently_paying)) + " owes " + users.showUser(int(being_paid)) + " $" + f"{balance:.2f}")
         elif balance < 0:
-            print(users.showUser(int(being_paid)) + " owes " + users.showUser(int(currently_paying)) + " $" + str(-1*balance))
+            print(users.showUser(int(being_paid)) + " owes " + users.showUser(int(currently_paying)) + " $" + f"{-1*balance:.2f}")
         else:
             print("There is no debt between " + users.showUser(int(being_paid)) + " and " + users.showUser(int(currently_paying)))
             while True:
@@ -227,8 +227,7 @@ def make_payment():
         except ValueError:
             raise ValueError("Payment amount must be a valid number.")
 
-        date = input("Payment date (YYYY-MM-DD): ")
-        # Optional: Add date validation here
+        date = date_input("Date of payment (YYYY-MM-DD) or type 'today': ")
 
         print("Created by: ")
         users.displayUsers()
@@ -352,9 +351,20 @@ def displayPayments():
         print(f"Input error: {e}")
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
-    
 
-while flag:
+def date_input(prompt, auto_date_keyword="today"):
+    while True:
+        date_input = input(prompt).strip()
+        if date_input.lower() == auto_date_keyword:
+            return datetime.today().strftime('%Y-%m-%d')
+        try:
+            date_obj = datetime.strptime(date_input, '%Y-%m-%d')
+            return date_obj.strftime('%Y-%m-%d')
+        except ValueError:
+            print("Invalid date format. Please enter the date in YYYY-MM-DD format or type 'today' for the current date.")
+
+
+while True:
     command = input('Hi,' \
             '\nPlease select from the following options:\n\n' \
             '1. Enter new expense\n'\
@@ -365,6 +375,9 @@ while flag:
             '6. View payments\n' \
             '7. Exit Program\n\n' \
             'Option Selected: ').strip()
+    if command != "4" and command != "7" and len(users.usersTable) < 2: 
+        print("Enter least two users before using these features! ")
+        continue
 
     match command:
         case "1":
@@ -383,7 +396,7 @@ while flag:
             print("Bye!")
             exit()
         case _:
-            command = input("Invalid input, would you like to try again? (y/n) ")
+            command = input("Invalid input, would you like to try again? (y/n) ").strip().lower()
             if command != "y":
                 print("ok bye")
                 exit()

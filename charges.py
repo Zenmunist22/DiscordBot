@@ -67,7 +67,7 @@ def dues(user_dues, specifiy_user):
         print("Charges to " + users.showUser(int(user_dues)))
         print("----------------------------")
         for (t, c) in zip(tranList, chargeList):
-            print("$" + str(c.amount) + " for " + t.description)   
+            print("$" + f"{c.amount:.2f}" + " for " + t.description)   
     print()
 
     sql = '''SELECT transactions.id, charges.id FROM transactions
@@ -89,6 +89,6 @@ def dues(user_dues, specifiy_user):
         print("Charges to " + users.showUser(int(specifiy_user)))
         print("----------------------------")
         for (t, c) in zip(tranList, chargeList):
-            print("$" + str(c.amount) + " for " + t.description)   
+            print("$" + f"{c.amount:.2f}" + " for " + t.description)   
 
     db.close()

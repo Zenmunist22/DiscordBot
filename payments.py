@@ -83,9 +83,9 @@ def paid(user_paid, specifiy_user):
         print("----------------------------")
         for (t, p) in zip(tranList, payList):
             if t == 0:
-                print(" $" + str(p.amount) + " on " + str(p.date))
+                print(" $" + f"{p.amount:.2f}" + " on " + str(p.date))
             else: 
-                print(" $" + str(p.amount) + " on " + str(p.date) + " for " + t.description)   
+                print(" $" + f"{p.amount:.2f}" + " on " + str(p.date) + " for " + t.description)   
     print()
 
 

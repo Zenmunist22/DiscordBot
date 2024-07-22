@@ -26,7 +26,7 @@ CREATE TABLE Transactions
     (id int PRIMARY KEY AUTO_INCREMENT, 
     transaction_category_id INT NOT NULL, 
     user_id_paid_by INT NOT NULL, 
-    DECIMAL(65,2) NOT NULL, 
+    amount DECIMAL(65,2) NOT NULL, 
     source VARCHAR(255) NOT NULL, 
     split_to_users INT NOT NULL, 
     description VARCHAR(45) NOT NULL, 
