@@ -57,31 +57,45 @@ def displayCategories():
 
     db.cur.execute("SELECT id , name FROM transaction_category")
     res = db.cur.fetchall()
-    cat = set()
+    categories = []
+    cat_set = set()
     for name in res:
-        print(str(name[0]) + ". " + name[1])
-        cat.add(str(name[0]))
+        categories.append(f"{name[0]}. {name[1]}")
+        cat_set.add(str(name[0]))
     
     db.close()
-    return cat
+    return "\n".join(categories), cat_set
 
 def displaySpecifiedTransactions(currently_paying, being_paid):
     db = database.Database()
     s = set()
+    
     sql = '''SELECT transactions.id FROM transactions
             LEFT JOIN charges 
             ON charges.transaction_id = transactions.id
             WHERE charges.user_id_charge_affected = %s 
             AND transactions.user_id_paid_by = %s; '''
+    
     db.cur.execute(sql, (currently_paying, being_paid))
     res = db.cur.fetchall()
+    
     temp = []
+    output = []
+    
     for charge in res:
         temp.append(transactionTable[int(*charge)])
-    for t in temp:
-        print(str(t.id) + ". " + t.description + " for an amount of $" + str(t.amount) + " from " + str(t.date))
-        s.add(t.id)
+    
+    if not temp:
+        output.append(f"No transactions found between {users.showUser(currently_paying)} and {users.showUser(being_paid)}.")
+    else:
+        output.append("----------------------------")
+        for t in temp:
+            output.append(str(t.id) + f" {t.description} for an amount of ${t.amount:.2f} from {t.date}")
+            s.add(t.id)
+
     db.close()
-    return s
+    
+    return "\n".join(output), s
+
     
 

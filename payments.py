@@ -48,7 +48,7 @@ def fetchPayments():
 payment_list = fetchPayments()
 paymentTable = {payment.id: payment for payment in payment_list}
 
-def paid(user_paid, specifiy_user):
+def paid(user_paid, specify_user):
     db = database.Database()
 
     sql = '''SELECT transactions.id, payments.id FROM transactions
@@ -57,7 +57,7 @@ def paid(user_paid, specifiy_user):
             WHERE payments.user_id_paid_by = %s AND
             payments.user_id_paid_to = %s ; '''
     
-    db.cur.execute(sql, (user_paid, specifiy_user))
+    db.cur.execute(sql, (user_paid, specify_user))
     res = db.cur.fetchall()
     tranList = []
     payList = []
@@ -69,24 +69,26 @@ def paid(user_paid, specifiy_user):
             WHERE payments.transaction_id IS NULL
             AND payments.user_id_paid_by = %s AND
             payments.user_id_paid_to = %s; '''
-    db.cur.execute(sql, (user_paid, specifiy_user))
+    db.cur.execute(sql, (user_paid, specify_user))
     res = db.cur.fetchall()
     
     for p in res:
-        tranList.append(0)
+        tranList.append(None)  # Use None instead of 0 for clarity
         payList.append(paymentTable[int(p[1])])
 
-    if payList == []:
-        print("There are no payments made by " + users.showUser(int(user_paid)) + " to " + users.showUser(int(specifiy_user)))
-    else:
-        print("Payments " + users.showUser(int(user_paid)) + " made to " + users.showUser(int(specifiy_user)))
-        print("----------------------------")
-        for (t, p) in zip(tranList, payList):
-            if t == 0:
-                print(" $" + f"{p.amount:.2f}" + " on " + str(p.date))
-            else: 
-                print(" $" + f"{p.amount:.2f}" + " on " + str(p.date) + " for " + t.description)   
-    print()
+    output = []
 
+    if not payList:
+        output.append("There are no payments made by " + users.showUser(int(user_paid)) + " to " + users.showUser(int(specify_user)))
+    else:
+        output.append("Payments " + users.showUser(int(user_paid)) + " made to " + users.showUser(int(specify_user)))
+        output.append("----------------------------")
+        for t, p in zip(tranList, payList):
+            if t is None:
+                output.append(" $" + f"{p.amount:.2f}" + " on " + str(p.date))
+            else: 
+                output.append(" $" + f"{p.amount:.2f}" + " on " + str(p.date) + " for " + t.description)
 
     db.close()
+
+    return "\n".join(output)

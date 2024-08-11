@@ -46,7 +46,7 @@ def fetchCharges():
 charge_list = fetchCharges()
 chargeTable = {charge.id: charge for charge in charge_list}
 
-def dues(user_dues, specifiy_user):
+def dues(user_dues, specify_user):
     db = database.Database()
 
     sql = '''SELECT transactions.id, charges.id FROM transactions
@@ -54,21 +54,25 @@ def dues(user_dues, specifiy_user):
             ON charges.transaction_id = transactions.id
             WHERE charges.user_id_charge_affected = %s AND
             transactions.user_id_paid_by = %s; '''
-    db.cur.execute(sql, (user_dues, specifiy_user))
+    
+    db.cur.execute(sql, (user_dues, specify_user))
     res = db.cur.fetchall()
     tranList = []
     chargeList = []
     for dues in res:
         tranList.append(tran.transactionTable[int(dues[0])])
         chargeList.append(chargeTable[int(dues[1])])
-    if tranList == []:
-        print("There are no charges to " + users.showUser(int(user_dues)) + " from " + users.showUser(int(specifiy_user)))
+
+    output = []
+
+    if not tranList:
+        output.append("There are no charges to " + users.showUser(int(user_dues)) + " from " + users.showUser(int(specify_user)))
     else:
-        print("Charges to " + users.showUser(int(user_dues)))
-        print("----------------------------")
-        for (t, c) in zip(tranList, chargeList):
-            print("$" + f"{c.amount:.2f}" + " for " + t.description)   
-    print()
+        output.append("Charges to " + users.showUser(int(user_dues)))
+        output.append("----------------------------")
+        for t, c in zip(tranList, chargeList):
+            output.append("$" + f"{c.amount:.2f}" + " for " + t.description)
+        output.append("")
 
     sql = '''SELECT transactions.id, charges.id FROM transactions
             LEFT JOIN charges 
@@ -76,19 +80,22 @@ def dues(user_dues, specifiy_user):
             WHERE charges.user_id_charge_affected = %s AND
             transactions.user_id_paid_by = %s; '''
     
-    db.cur.execute(sql, (specifiy_user, user_dues))
+    db.cur.execute(sql, (specify_user, user_dues))
     res = db.cur.fetchall()
     tranList.clear()
     chargeList.clear()
     for dues in res:
         tranList.append(tran.transactionTable[int(dues[0])])
         chargeList.append(chargeTable[int(dues[1])])
-    if tranList == []:
-        print("There are no charges to " + users.showUser(int(specifiy_user)) + " from " + users.showUser(int(user_dues)))
+
+    if not tranList:
+        output.append("There are no charges to " + users.showUser(int(specify_user)) + " from " + users.showUser(int(user_dues)))
     else:
-        print("Charges to " + users.showUser(int(specifiy_user)))
-        print("----------------------------")
-        for (t, c) in zip(tranList, chargeList):
-            print("$" + f"{c.amount:.2f}" + " for " + t.description)   
+        output.append("Charges to " + users.showUser(int(specify_user)))
+        output.append("----------------------------")
+        for t, c in zip(tranList, chargeList):
+            output.append("$" + f"{c.amount:.2f}" + " for " + t.description)
 
     db.close()
+
+    return "\n".join(output)

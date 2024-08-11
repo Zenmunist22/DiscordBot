@@ -52,7 +52,8 @@ def displayUsers(option = None):
         for user in usersTable:
             res.add(showUser(user))
         return res
-
+    user_display = []
     for user in usersTable:
-        print(f"{str(user)+".":<{3}} {showUser(user)}")
+        user_display.append(f"{str(user)+".":<{3}} {showUser(user)}")
+    return "\n".join(user_display)
     

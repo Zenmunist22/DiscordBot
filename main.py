@@ -1,24 +1,26 @@
-# This example requires the 'message_content' intent.
-
+from typing import Final
+import os
 import discord
+from dotenv import load_dotenv
+from discord import Intents, Client, Message
 
-discordSecretToken=""
+from discord.ext import commands
 
-intents = discord.Intents.default()
-intents.message_content = True
 
-client = discord.Client(intents=intents)
+load_dotenv()
+TOKEN: Final[str] = os.getenv('token')
 
-@client.event
+from bot_instance import bot  
+
+
+@bot.event
 async def on_ready():
-    print(f'We have logged in as {client.user}')
+    print(f'We have logged in as {bot.user}')
+    
+import menu
 
-@client.event
-async def on_message(message):
-    if message.author == client.user:
-        return
+def main():  
+    bot.run(token=TOKEN)
 
-    if message.content.startswith('$hey'):
-        await message.channel.send('Hello!')
-
-client.run(discordSecretToken)
+if __name__ == '__main__':
+    main()
