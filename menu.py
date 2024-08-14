@@ -9,6 +9,7 @@ from bot_instance import bot
 
 @bot.command()
 async def seeBalance(ctx, payer, payee, option):
+    server_id = ctx.guild.id  # Get server ID from the context
     try:
         db = database.Database()
 
@@ -16,17 +17,18 @@ async def seeBalance(ctx, payer, payee, option):
                 LEFT JOIN charges 
                 ON charges.transaction_id = transactions.id
                 WHERE charges.user_id_charge_affected = %s
-                AND transactions.user_id_paid_by = %s;'''
+                AND transactions.user_id_paid_by = %s
+                AND charges.server_id = %s;'''
 
         try:
-            db.cur.execute(sql, (payer, payee))
+            db.cur.execute(sql, (payer, payee, server_id))
             results = db.cur.fetchall()
             if not results or results[0] is None or results[0][0] is None:
                 res = 0
             else:
                 res = results[0][0]
 
-            db.cur.execute(sql, (payee, payer))
+            db.cur.execute(sql, (payee, payer, server_id))
             results = db.cur.fetchall()
             if results and results[0][0] is not None:
                 res -= results[0][0]
@@ -37,17 +39,18 @@ async def seeBalance(ctx, payer, payee, option):
 
         sql = '''SELECT SUM(payments.amount) as total FROM payments 
                 WHERE user_id_paid_by = %s
-                AND user_id_paid_to = %s;'''
+                AND user_id_paid_to = %s
+                AND server_id = %s;'''
 
         try:
-            db.cur.execute(sql, (payer, payee))
+            db.cur.execute(sql, (payer, payee, server_id))
             results = db.cur.fetchall()
             if not results or results[0] is None or results[0][0] is None:
                 res2 = 0
             else:
                 res2 = results[0][0]
 
-            db.cur.execute(sql, (payee, payer))
+            db.cur.execute(sql, (payee, payer, server_id))
             results = db.cur.fetchall()
             if results and results[0][0] is not None:
                 res2 -= results[0][0]
@@ -73,6 +76,7 @@ async def seeBalance(ctx, payer, payee, option):
 
 @bot.command()
 async def add_user(ctx):
+    server_id = ctx.guild.id  # Get server ID from the context
     def check(m):
         return m.author == ctx.author and m.channel == ctx.channel
     try:
@@ -80,7 +84,7 @@ async def add_user(ctx):
         name = (await bot.wait_for('message', check=check)).content.strip()
         if not name:
             raise ValueError("Name cannot be empty.")
-        nameSet = users.displayUsers(1)
+        nameSet = users.displayUsers(server_id, 1)
         if name in nameSet:
             raise ValueError("Name already taken. Try something else")
 
@@ -98,7 +102,7 @@ async def add_user(ctx):
         if "@" not in email or "." not in email:
             raise ValueError("Email must be a valid email address.")
 
-        users.User.create(None, name, phone_number, email)
+        users.User.create(server_id, name, phone_number, email)  # Pass server_id here
         await ctx.send("User created successfully!")
 
     except ValueError as e:
@@ -106,6 +110,7 @@ async def add_user(ctx):
 
 @bot.command()
 async def new_expense(ctx):
+    server_id = ctx.guild.id  # Get server ID from the context
     def check(m):
         return m.author == ctx.author and m.channel == ctx.channel
     try:
@@ -123,14 +128,15 @@ async def new_expense(ctx):
         transaction_category_id = int(transaction_category_id)
 
         await ctx.send("Paid by: ")
-        await ctx.send(users.displayUsers())
+        await ctx.send(users.displayUsers(server_id))
         paid_by_msg = await bot.wait_for('message', check=check)
         user_id_paid_by = paid_by_msg.content.strip()
         if not user_id_paid_by.isdigit():
             await ctx.send("User ID must be a number.")
             return
         user_id_paid_by = int(user_id_paid_by)
-        if user_id_paid_by not in users.usersTable:
+        temp = users.get_user_id(server_id, user_id_paid_by)
+        if temp not in users.usersTable or users.usersTable[temp].server_id != server_id:
             await ctx.send("User ID does not exist.")
             return
         await ctx.send(f"Paid by {users.showUser(user_id_paid_by)}")
@@ -157,13 +163,13 @@ async def new_expense(ctx):
         count = 0
         while True:
             await ctx.send("Who needs to pay: ")
-            await ctx.send(users.displayUsers())
+            await ctx.send(users.displayUsers(server_id))
             user_msg = await bot.wait_for('message', check=check)
             hold = user_msg.content.strip()
-            if not hold.isdigit() or int(hold) not in users.usersTable:
+            if not hold.isdigit() or users.get_user_id(server_id, int(hold)) not in users.usersTable:
                 await ctx.send("Invalid user ID. Please enter a valid number.")
                 continue
-            user_id = int(hold)
+            user_id = users.get_user_id(server_id, int(hold))
             await ctx.send(f"Confirm charge to {users.showUser(user_id)}? (y/n)")
             confirm_msg = await bot.wait_for('message', check=check)
             if confirm_msg.content.lower() == "y":
@@ -185,10 +191,10 @@ async def new_expense(ctx):
         date = await date_input(ctx, check, "Date of purchase (YYYY-MM-DD) or type 'today': ")
 
         await ctx.send("Created by: ")
-        await ctx.send(users.displayUsers())
+        await ctx.send(users.displayUsers(server_id))
         created_by_msg = await bot.wait_for('message', check=check)
         created_by = created_by_msg.content.strip()
-        if not created_by.isdigit() or int(created_by) not in users.usersTable:
+        if not created_by.isdigit() or users.get_user_id(server_id, int(created_by)) not in users.usersTable or users.usersTable[users.get_user_id(server_id, int(created_by))].server_id != server_id:
             await ctx.send("User ID must be a valid number in the user list.")
             return
         created_by = int(created_by)
@@ -196,6 +202,7 @@ async def new_expense(ctx):
         split_to_users = len(users_paying) + 1
         split = amount / split_to_users
 
+        user_id_paid_by = users.get_user_id(server_id, user_id_paid_by)
         await ctx.send(f"Confirm transaction:\n{users.showUser(user_id_paid_by)} paid ${amount:.2f} for {description}")
         await ctx.send(f"The following user(s) will be charged ${split:.2f} each:")
         for user in users_paying:
@@ -210,10 +217,10 @@ async def new_expense(ctx):
                 await ctx.send("Transaction cancelled.")
                 return
 
-        new_trans = transactions.Transactions.create(None, transaction_category_id, user_id_paid_by, amount, source, split_to_users, description, date, None, None, created_by)
+        new_trans = transactions.Transactions.create(server_id, transaction_category_id, user_id_paid_by, amount, source, split_to_users, description, date, None, None, created_by)
         
         for user in users_paying:
-            charges.Charges.create(None, new_trans.id, user, split, created_by, None, None, None)
+            charges.Charges.create(server_id, new_trans.id, user, split, created_by, None, None, None)
 
         await ctx.send("Transaction created!")
 
@@ -238,24 +245,30 @@ async def date_input(ctx, check, prompt, auto_date_keyword="today"):
     
 @bot.command()
 async def display_dues(ctx):
+    server_id = ctx.guild.id  # Get server ID from the context
     def check(m):
         return m.author == ctx.author and m.channel == ctx.channel
     try:
         await ctx.send("Whose dues would you like to see?\nPlease select from the following options:\n")
-        await ctx.send(users.displayUsers())
-        user_dues = (await bot.wait_for('message', check=check)).content
-        if not user_dues.isdigit() or int(user_dues) not in users.usersTable:
-            raise ValueError("Invalid user ID selected.")
-        user_dues = int(user_dues)
+        await ctx.send(users.displayUsers(server_id))
+        specific_id_dues = (await bot.wait_for('message', check=check)).content.strip()
+        if not specific_id_dues.isdigit():
+            raise ValueError("Invalid input; please enter a number.")
+        specific_id_dues = int(specific_id_dues)
         
+        # Retrieve the actual user_id based on server_id and specific_id
+        user_dues = users.get_user_id(server_id, specific_id_dues)
+        if user_dues is None:
+            raise ValueError("User ID not found.")
+
         await ctx.send(users.showUser(user_dues) + "'s Balance")
         await ctx.send("----------------------------")
         
         total = 0
-        for i in users.usersTable:
-            if i == user_dues:
+        for user in users.usersTable.values():
+            if user.id == user_dues or user.server_id != server_id:
                 continue
-            total += await seeBalance(ctx, user_dues, i, 1)
+            total += await seeBalance(ctx, user_dues, user.id, 1)
         
         await ctx.send("\nTotal Balance: $" + f"{total:.2f}")
         await ctx.send("----------------------------")
@@ -267,26 +280,27 @@ async def display_dues(ctx):
    
 @bot.command()
 async def make_payment(ctx):
+    server_id = ctx.guild.id  # Get server ID from the context
     def check(m):
         return m.author == ctx.author and m.channel == ctx.channel
 
     try:
         await ctx.send("Who is making the payment?")
-        await ctx.send(users.displayUsers())
+        await ctx.send(users.displayUsers(server_id))
         payer_msg = await bot.wait_for('message', check=check)
         currently_paying = payer_msg.content.strip()
-        if not currently_paying.isdigit() or int(currently_paying) not in users.usersTable:
+        if not currently_paying.isdigit() or users.get_user_id(server_id, int(currently_paying)) not in users.usersTable or users.usersTable[users.get_user_id(server_id, int(currently_paying))].server_id != server_id:
             await ctx.send("Invalid user ID for who is making the payment.")
             return
-        currently_paying = int(currently_paying)
+        currently_paying = users.get_user_id(server_id, int(currently_paying))
 
         await ctx.send("Who is the payment to? ")
         payee_msg = await bot.wait_for('message', check=check)
         being_paid = payee_msg.content.strip()
-        if not being_paid.isdigit() or int(being_paid) not in users.usersTable:
+        if not being_paid.isdigit() or users.get_user_id(server_id, int(being_paid)) not in users.usersTable or users.usersTable[users.get_user_id(server_id, int(being_paid))].server_id != server_id:
             await ctx.send("Invalid user ID for who is being paid.")
             return
-        being_paid = int(being_paid)
+        being_paid = users.get_user_id(server_id, int(being_paid))
 
         balance = await seeBalance(ctx, currently_paying, being_paid, 2)
 
@@ -301,19 +315,19 @@ async def make_payment(ctx):
             if cont_msg.content.strip().lower() == "n":
                 return
 
+
         await ctx.send("Is the payment specific to one transaction? (y/n)")
         specific_msg = await bot.wait_for('message', check=check)
         specific = specific_msg.content.strip().lower()
 
         transaction_id = None
         if specific == "y":
-            tSet = transactions.displaySpecifiedTransactions(currently_paying, being_paid)
+            tSet = transactions.displaySpecifiedTransactions(server_id, currently_paying, being_paid)
             if tSet:
                 await ctx.send("Select from the following transactions: ")
                 await ctx.send(tSet[0])
                 trans_msg = await bot.wait_for('message', check=check)
                 transaction_id = trans_msg.content.strip()
-                print(tSet[1])
                 if not transaction_id.isdigit() or int(transaction_id) not in tSet[1]:
                     await ctx.send("Invalid transaction ID.")
                     return
@@ -346,15 +360,15 @@ async def make_payment(ctx):
         date = await date_input(ctx, check, "Date of payment (YYYY-MM-DD) or type 'today': ")
 
         await ctx.send("Created by: ")
-        await ctx.send(users.displayUsers())
+        await ctx.send(users.displayUsers(server_id))
         created_by_msg = await bot.wait_for('message', check=check)
         created_by = created_by_msg.content.strip()
-        if not created_by.isdigit() or int(created_by) not in users.usersTable:
+        if not created_by.isdigit() or users.get_user_id(server_id, int(created_by)) not in users.usersTable or users.usersTable[users.get_user_id(server_id, int(created_by))].server_id != server_id:
             await ctx.send("Invalid user ID for created by.")
             return
-        created_by = int(created_by)
+        created_by = users.get_user_id(server_id, int(created_by))
 
-        payments.Payments.create(None, transaction_id, currently_paying, being_paid, method, amount, date, created_by, None)
+        payments.Payments.create(server_id, transaction_id, currently_paying, being_paid, method, amount, date, created_by, None)
         await ctx.send("Payment created successfully!")
 
     except ValueError as e:
@@ -364,29 +378,30 @@ async def make_payment(ctx):
 
 @bot.command()
 async def displayCharges(ctx):
+    server_id = ctx.guild.id  # Get server ID from the context
     def check(m):
         return m.author == ctx.author and m.channel == ctx.channel
 
     try:
         await ctx.send("Whose dues would you like to see?\nPlease select from the following options:\n")
-        await ctx.send(users.displayUsers())
+        await ctx.send(users.displayUsers(server_id))
         dues_msg = await bot.wait_for('message', check=check)
         user_dues = dues_msg.content.strip()
-        if not user_dues.isdigit() or int(user_dues) not in users.usersTable:
+        if not user_dues.isdigit() or users.get_user_id(server_id, int(user_dues)) not in users.usersTable or users.usersTable[users.get_user_id(server_id, int(user_dues))].server_id != server_id:
             await ctx.send("Invalid user ID selected.")
             return
-        user_dues = int(user_dues)
+        user_dues = users.get_user_id(server_id, int(user_dues))
 
         await ctx.send(f"Dues between {users.showUser(user_dues)} and who?\nPlease select from the following options:\n")
-        await ctx.send(users.displayUsers())
+        await ctx.send(users.displayUsers(server_id))
         specify_user_msg = await bot.wait_for('message', check=check)
         specify_user = specify_user_msg.content.strip()
-        if not specify_user.isdigit() or int(specify_user) not in users.usersTable:
+        if not specify_user.isdigit() or users.get_user_id(server_id, int(specify_user)) not in users.usersTable or users.usersTable[users.get_user_id(server_id, int(specify_user))].server_id != server_id:
             await ctx.send("Invalid user ID selected.")
             return
-        specify_user = int(specify_user)
+        specify_user = users.get_user_id(server_id, int(specify_user))
 
-        await ctx.send(charges.dues(user_dues, specify_user))
+        await ctx.send(charges.dues(server_id, user_dues, specify_user))
 
     except ValueError as e:
         await ctx.send(f"Input error: {e}")
@@ -395,29 +410,30 @@ async def displayCharges(ctx):
 
 @bot.command()
 async def displayPayments(ctx):
+    server_id = ctx.guild.id  # Get server ID from the context
     def check(m):
         return m.author == ctx.author and m.channel == ctx.channel
 
     try:
         await ctx.send("Whose payments would you like to see?\nPlease select from the following options:\n")
-        await ctx.send(users.displayUsers())
+        await ctx.send(users.displayUsers(server_id))
         payments_msg = await bot.wait_for('message', check=check)
         user_paid = payments_msg.content.strip()
-        if not user_paid.isdigit() or int(user_paid) not in users.usersTable:
+        if not user_paid.isdigit() or users.get_user_id(server_id, int(user_paid)) not in users.usersTable or users.usersTable[users.get_user_id(server_id, int(user_paid))].server_id != server_id:
             await ctx.send("Invalid user ID selected.")
             return
         user_paid = int(user_paid)
 
         await ctx.send(f"Payments to who?\nPlease select from the following options:\n")
-        await ctx.send(users.displayUsers())
+        await ctx.send(users.displayUsers(server_id))
         specify_user_msg = await bot.wait_for('message', check=check)
         specify_user = specify_user_msg.content.strip()
-        if not specify_user.isdigit() or int(specify_user) not in users.usersTable:
+        if not specify_user.isdigit() or users.get_user_id(server_id, int(specify_user)) not in users.usersTable or users.usersTable[users.get_user_id(server_id, int(specify_user))].server_id != server_id:
             await ctx.send("Invalid user ID selected.")
             return
         specify_user = int(specify_user)
 
-        await ctx.send(payments.paid(user_paid, specify_user))
+        await ctx.send(payments.paid(server_id, user_paid, specify_user))
 
     except ValueError as e:
         await ctx.send(f"Input error: {e}")
@@ -426,6 +442,7 @@ async def displayPayments(ctx):
 
 @bot.command()
 async def start(ctx):
+    server_id = ctx.guild.id
     def check(m):
         return m.author == ctx.author and m.channel == ctx.channel
     while True:
@@ -440,7 +457,7 @@ async def start(ctx):
                 '7. Exit Program\n\n' \
                 'Option Selected: ')
         command = (await bot.wait_for('message', check=check)).content.strip()
-        if command != "4" and command != "7" and len(users.usersTable) < 2: 
+        if command != "4" and command != "7" and len(users.displayUsers(server_id, 1)) < 2: 
             await ctx.send("Enter at least two users before using these features!")
             continue
 
@@ -466,4 +483,3 @@ async def start(ctx):
                 if retry.content.strip().lower() != "y":
                     await ctx.send("Ok bye")
                     break
-

@@ -6,7 +6,7 @@ class Database:
             self.connection = con.connect(
                 user = 'root',
                 host = 'localhost',
-                database = 'discordBot',
+                database = 'citizen',
                 passwd = 'r00tP45s!'
             )
             self.cur = self.connection.cursor()
