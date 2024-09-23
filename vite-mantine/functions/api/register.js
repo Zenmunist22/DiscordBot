@@ -1,5 +1,3 @@
-
-import * as jwt from "jsonwebtoken";
 import * as crypto from "crypto";
 function generateAccessToken(username, TOKEN_SECRET) {
     return jwt.sign({name: username}, TOKEN_SECRET, { expiresIn: 1800 });
