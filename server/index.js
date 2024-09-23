@@ -1,12 +1,20 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
-
 const dotenv = require('dotenv');
-dotenv.config();
+const cors = require('cors');
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
 
+dotenv.config();
 
 const app = express();
 const port = 3000;
+
+
+app.use(express.json());
+app.use(cors())
+
+
 
 function generateAccessToken(username) {
     return jwt.sign(username, process.env.TOKEN_SECRET, { expiresIn: '1800s' });
@@ -29,12 +37,40 @@ function authenticateToken(req, res, next) {
     })
 }
 
-app.post('api/login', (req, res) => {
+
+app.post('/api/register', (req, res) => {
+
+    // content-type is application/json
+    // body should look like
+    /*  
+    /   {
+    /       username: "",
+    /       password: ""
+    /   }
+    */
+    const password = req.body.password;
+    bcrypt.hash(password, saltRounds, function(err, hash){
+        console.log("password " + password);
+        console.log("hash " + hash);
+    });
+    // store hash in db
+    // return 200 if completed
+    res.status(200).send();
+
+});
+
+app.post('/api/login', (req, res) => {
 
     /*
     * TODO: Access DB to verify username + passcode
     */
     
+    // 1. Obtain hash from db
+    // 2. Compare to password
+    // 3. return JWT on success
+
+    console.log(req.body.username)
+    console.log(req.body.password)
     const token = generateAccessToken( {username: req.body.username} );
     res.json(token);
 
