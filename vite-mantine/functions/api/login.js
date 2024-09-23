@@ -12,8 +12,9 @@ export async function onRequest(context) {
     // 2. Compare to password
     // 3. return JWT on success
 
-    console.log(req.body.username)
+    console.log(context.Response.body.json())
     console.log(req.body.password)
     const token = generateAccessToken( {username: req.body.username} );
-    return (new Response(token)).json()
+    const myOptions = { status: 200, statusText: "SuperSmashingGreat!" };
+    return (new Response(token, myOptions))
 }
