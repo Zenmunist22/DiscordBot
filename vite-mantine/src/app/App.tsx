@@ -1,12 +1,20 @@
 import "@mantine/core/styles.css";
-import { Button, MantineProvider } from "@mantine/core";
+import { Container, MantineProvider } from "@mantine/core";
 import { theme } from "../theme";
-import Root from "./Root";
+import { Link, Outlet } from "react-router-dom";
 
 
 
 export default function App() {
-  return <MantineProvider theme={theme}>
-      <Root></Root>
-    </MantineProvider>;
+  return ( 
+    <MantineProvider theme={theme}>
+      
+      <Container fluid style= {{height: '95vh'}}bg="var(--mantine-color-blue-light)" >
+        <Link to="/"> Home </Link>
+        <Link to="/register"> Register </Link>
+        <Link to="/login"> Login </Link>
+        <Outlet></Outlet>    
+      </Container>
+    </MantineProvider>
+  );
 }

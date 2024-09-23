@@ -3,15 +3,26 @@ import * as ReactDOM from "react-dom/client";
 import App from "./App.tsx";
 import {
   createBrowserRouter,
-  Router,
   RouterProvider,
 } from "react-router-dom";
+import Login from "./Login.tsx";
+import Register from "./Register.tsx";
 
 
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <App></App>
+    element: <App></App>,
+    children: [
+      {
+        path: "/login/",
+        element: <Login/>
+      },
+      {
+        path: "/register/",
+        element: <Register/>
+      }
+    ]
   },
 ]);
 
