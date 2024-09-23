@@ -3,7 +3,7 @@ import * as jwt from "jsonwebtoken";
 function generateAccessToken(username) {
     return jwt.sign(username, process.env.TOKEN_SECRET, { expiresIn: '1800s' });
 }
-export async function onRequest(context) {
+export async function onRequestPost(context) {
       /*
     * TODO: Access DB to verify username + passcode
     */
