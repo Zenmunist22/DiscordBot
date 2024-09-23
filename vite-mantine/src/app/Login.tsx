@@ -21,7 +21,7 @@ export default function Login() {
         event.preventDefault();
         
         const formData = new FormData(event.currentTarget);
-        const url = "http://localhost:4173/api/login";
+        const url = "https://house-79v.pages.dev/api/login";
 
         const payload = {
             username: formData.get("username")?.toString(),
