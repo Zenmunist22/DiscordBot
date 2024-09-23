@@ -58,3 +58,49 @@ erDiagram
 
 
 ```
+## Password Storing Process
+
+The following is a flowchart diagram generated in mermaid
+```mermaid
+flowchart LR
+
+Client["Client"]
+API("API")
+SQLDB[("CloudFlare D1 DB")]
+HashPassword["HashPassword"]
+
+subgraph Hash["API Process"]
+    API -..-> HashPassword
+end
+Client --HTTP POST api/register--> Hash 
+Hash --Store hash/salt--> SQLDB
+
+
+```
+
+## Password Auth Process
+
+The following is a flowchart diagram generated in mermaid
+```mermaid
+flowchart LR
+
+Client["Client"]
+API1("API")
+API2("API")
+SQLDB[("CloudFlare D1 DB")]
+ComparePasswordHashSalt["Password+Salt Compare"]
+Response["JWT sends back to user"]
+
+
+subgraph Hash1["API Process 1"]
+    API1 --Retrieve Salt/Hash--> SQLDB 
+end
+subgraph Hash2["API Process 2"]
+    API2 -..-> ComparePasswordHashSalt
+end
+Client --HTTP POST api/login--> Hash1 
+Hash1 --Deliver Salt/Hash--> Hash2
+Hash2 --If compare is true--> Response
+
+
+```
